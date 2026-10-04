@@ -1,0 +1,8 @@
+{
+  "name": "PERUMAHAN GRAHA NUANSA MUNDU",
+  "description": "Aplikasi tata kelola Perumahan Graha Nuansa Mundu modern untuk manajemen data warga & KK, kas & iuran bulanan QRIS, pengumuman warga, dan simulator darurat SOS.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

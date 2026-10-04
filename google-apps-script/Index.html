@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PERUMAHAN GNM - Graha Nuansa Mundu | Sistem RT Digital</title>
+  <base target="_top">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- React 18 & Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- QRCode & Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    @media print {
+      body * { visibility: hidden; }
+      #printable-area, #printable-area * { visibility: visible; }
+      #printable-area { position: absolute; left: 0; top: 0; width: 100%; border: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen selection:bg-emerald-500 selection:text-white">
+  <div id="root">
+    <!-- Initial Loader -->
+    <div class="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white">
+      <div class="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center font-black text-2xl shadow-xl shadow-emerald-900/50 mb-4 animate-bounce">
+        GNM
+      </div>
+      <h2 class="text-xl font-bold tracking-wide">PERUMAHAN GRAHA NUANSA MUNDU</h2>
+      <p class="text-xs text-slate-400 mt-1">Memuat Sistem RT Digital & Kas Paguyuban...</p>
+      <div class="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mt-6"></div>
+    </div>
+  </div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // --- ICONS HELPER ---
+    const Icon = ({ name, className = "w-5 h-5" }) => {
+      switch (name) {
+        case 'building':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>;
+        case 'users':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
+        case 'wallet':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>;
+        case 'bell':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>;
+        case 'sos':
+        case 'alert':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>;
+        case 'settings':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+        case 'qr':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>;
+        case 'search':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+        case 'plus':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>;
+        case 'check':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>;
+        case 'x':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>;
+        case 'phone':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>;
+        case 'printer':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>;
+        case 'shield':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>;
+        case 'trash':
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+        default:
+          return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" strokeWidth="2" /></svg>;
+      }
+    };
+
+    // --- INITIAL DATA ---
+    const defaultSettings = {
+      namaKetuaPaguyuban: 'Bambang Setiawan',
+      kontakKetua: '081298765432',
+      nominalIuranPerBulan: 50000,
+      namaPosSatpam: 'Pos Satpam',
+      kontakPosSatpam: '081233445566',
+      qrId: 'ID1020260409001',
+      merchantName: 'KAS PERUMAHAN GNM',
+      bankName: 'BCA',
+      bankNumber: '8220192831',
+      bankHolder: 'PAGUYUBAN GRAHA NUANSA MUNDU',
+      adminPin: '1234'
+    };
+
+    const initialWargaData = [
+      { id: 1, nama: 'Bambang Setiawan', blok: 'A1', noRumah: '01', nik: '3209121004850001', hp: '081298765432', statusRumah: 'Tetap', iuranLunas: true, tglMasuk: '2021-02-10' },
+      { id: 2, nama: 'Hendra Gunawan', blok: 'A1', noRumah: '02', nik: '3209121508880002', hp: '081322334455', statusRumah: 'Tetap', iuranLunas: true, tglMasuk: '2021-03-15' },
+      { id: 3, nama: 'Dedi Supriyadi', blok: 'B2', noRumah: '05', nik: '3209122201900003', hp: '085711223344', statusRumah: 'Kontrak', iuranLunas: false, tglMasuk: '2022-01-20' },
+      { id: 4, nama: 'Ahmad Fauzi', blok: 'B2', noRumah: '08', nik: '3209120909870004', hp: '081988776655', statusRumah: 'Tetap', iuranLunas: true, tglMasuk: '2021-06-11' },
+      { id: 5, nama: 'Siti Nurhaliza', blok: 'C3', noRumah: '12', nik: '3209121803920005', hp: '081234567890', statusRumah: 'Tetap', iuranLunas: false, tglMasuk: '2022-07-01' },
+      { id: 6, nama: 'Eko Prasetyo (Satpam)', blok: 'POS', noRumah: '01', nik: '3209122005890006', hp: '081233445566', statusRumah: 'Tetap', iuranLunas: true, tglMasuk: '2021-01-01' }
+    ];
+
+    const initialKasData = [
+      { id: 1, tanggal: '2026-10-01', jenis: 'Masuk', kategori: 'Iuran', nominal: 1500000, desc: 'Penerimaan Iuran Bulanan 30 KK', pj: 'Bendahara Paguyuban' },
+      { id: 2, tanggal: '2026-10-02', jenis: 'Keluar', kategori: 'Keamanan', nominal: 800000, desc: 'Honor Petugas Keamanan & Pos Satpam', pj: 'Seksi Keamanan' },
+      { id: 3, tanggal: '2026-10-02', jenis: 'Keluar', kategori: 'Kebersihan', nominal: 350000, desc: 'Pengangkutan Sampah Lingkungan Perumahan', pj: 'Seksi Kebersihan' },
+      { id: 4, tanggal: '2026-10-03', jenis: 'Masuk', kategori: 'Sosial', nominal: 500000, desc: 'Donasi Swadaya Lampu Jalan Fasum', pj: 'Bpk. Hendra' }
+    ];
+
+    const initialPengumumanData = [
+      { id: 1, judul: 'Kerja Bakti Massal & Fogging Nyamuk', tanggal: '2026-10-08', kategori: 'Kegiatan', lokasi: 'Taman & Saluran Blok A - D', isi: 'Dihimbau seluruh warga hadir kerja bakti membersihkan drainase dan saluran air menjelang musim hujan. Kumpul di Pos Satpam jam 07.30 WIB.', pj: 'Ketua Paguyuban' },
+      { id: 2, judul: 'Peningkatan Patroli Pos Satpam Malam Hari', tanggal: '2026-10-02', kategori: 'Keamanan', lokasi: 'Gerbang Utama & Pos Satpam', isi: 'Portal gerbang perumahan ditutup pukul 23.00 WIB. Tamu luar wajib lapor ke Pos Satpam (Nomor Siaga: 081233445566).', pj: 'Petugas Pos Satpam' }
+    ];
+
+    // --- MAIN APP COMPONENT ---
+    function App() {
+      // States with LocalStorage
+      const [settings, setSettings] = useState(() => {
+        const saved = localStorage.getItem('gnm_rt_settings');
+        return saved ? { ...defaultSettings, ...JSON.parse(saved) } : defaultSettings;
+      });
+
+      const [warga, setWarga] = useState(() => {
+        const saved = localStorage.getItem('gnm_rt_warga');
+        return saved ? JSON.parse(saved) : initialWargaData;
+      });
+
+      const [kas, setKas] = useState(() => {
+        const saved = localStorage.getItem('gnm_rt_kas');
+        return saved ? JSON.parse(saved) : initialKasData;
+      });
+
+      const [pengumuman, setPengumuman] = useState(() => {
+        const saved = localStorage.getItem('gnm_rt_pengumuman');
+        return saved ? JSON.parse(saved) : initialPengumumanData;
+      });
+
+      const [userRole, setUserRole] = useState('admin'); // 'admin' | 'warga'
+      const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'warga' | 'kas' | 'pengumuman'
+
+      // Modal States
+      const [isSosOpen, setIsSosOpen] = useState(false);
+      const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+      const [isQrOpen, setIsQrOpen] = useState(false);
+      const [isAddWargaOpen, setIsAddWargaOpen] = useState(false);
+      const [isAddKasOpen, setIsAddKasOpen] = useState(false);
+      const [isAddPengumumanOpen, setIsAddPengumumanOpen] = useState(false);
+      const [selectedWargaForPay, setSelectedWargaForPay] = useState(null);
+      const [kuitansiModalData, setKuitansiModalData] = useState(null);
+
+      // Save to localStorage on change
+      useEffect(() => { localStorage.setItem('gnm_rt_settings', JSON.stringify(settings)); }, [settings]);
+      useEffect(() => { localStorage.setItem('gnm_rt_warga', JSON.stringify(warga)); }, [warga]);
+      useEffect(() => { localStorage.setItem('gnm_rt_kas', JSON.stringify(kas)); }, [kas]);
+      useEffect(() => { localStorage.setItem('gnm_rt_pengumuman', JSON.stringify(pengumuman)); }, [pengumuman]);
+
+      // Calculations
+      const totalKasMasuk = useMemo(() => kas.filter(k => k.jenis === 'Masuk').reduce((acc, c) => acc + c.nominal, 0), [kas]);
+      const totalKasKeluar = useMemo(() => kas.filter(k => k.jenis === 'Keluar').reduce((acc, c) => acc + c.nominal, 0), [kas]);
+      const saldoKas = totalKasMasuk - totalKasKeluar;
+      const totalWargaLunas = useMemo(() => warga.filter(w => w.iuranLunas).length, [warga]);
+
+      // Handle pay iuran
+      const handleOpenPay = (w) => {
+        setSelectedWargaForPay(w || warga[0]);
+        setIsQrOpen(true);
+      };
+
+      const handleConfirmPayment = (paymentData) => {
+        // Mark warga lunas
+        if (selectedWargaForPay) {
+          setWarga(prev => prev.map(w => w.id === selectedWargaForPay.id ? { ...w, iuranLunas: true } : w));
+        }
+        // Add to kas
+        const newKasItem = {
+          id: Date.now(),
+          tanggal: new Date().toISOString().slice(0, 10),
+          jenis: 'Masuk',
+          kategori: 'Iuran',
+          nominal: paymentData.total,
+          desc: `Iuran (${paymentData.durasi} Bulan: ${paymentData.periode}) - ${paymentData.warga.nama} [${paymentData.warga.blok}/${paymentData.warga.noRumah}]`,
+          pj: 'QRIS Digital Otomatis'
+        };
+        setKas(prev => [newKasItem, ...prev]);
+
+        // Trigger confetti
+        if (window.confetti) {
+          window.confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+        }
+
+        // Open kuitansi
+        setKuitansiModalData({
+          no: `KWT-GNM-${Date.now().toString().slice(-6)}`,
+          tanggal: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+          warga: paymentData.warga,
+          nominal: paymentData.total,
+          durasi: paymentData.durasi,
+          periode: paymentData.periode,
+          ketua: settings.namaKetuaPaguyuban
+        });
+        setIsQrOpen(false);
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+          {/* HEADER */}
+          <header className="bg-slate-900 text-white sticky top-0 z-30 shadow-md border-b border-slate-800">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-emerald-600 rounded-xl flex items-center justify-center font-extrabold text-white text-base shadow-md shadow-emerald-900/40">
+                  GNM
+                </div>
+                <div>
+                  <h1 className="text-sm sm:text-base font-extrabold tracking-wide text-white leading-tight">
+                    PERUMAHAN GNM
+                  </h1>
+                  <p className="text-[10px] sm:text-xs text-emerald-400 font-medium leading-tight">
+                    Graha Nuansa Mundu • Cirebon
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                {/* SOS Button */}
+                <button
+                  onClick={() => setIsSosOpen(true)}
+                  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white font-extrabold px-3 py-1.5 rounded-lg text-xs flex items-center space-x-1.5 shadow-md shadow-red-900/40 transition animate-pulse"
+                >
+                  <Icon name="sos" className="w-4 h-4" />
+                  <span className="hidden sm:inline">DARURAT</span>
+                  <span>SOS</span>
+                </button>
+
+                {/* Role Toggle */}
+                <button
+                  onClick={() => setUserRole(userRole === 'admin' ? 'warga' : 'admin')}
+                  className={`text-xs px-2.5 py-1.5 rounded-lg font-semibold border flex items-center space-x-1 transition ${
+                    userRole === 'admin' 
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' 
+                      : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+                  }`}
+                  title="Klik untuk beralih mode Warga / Admin"
+                >
+                  <Icon name="shield" className="w-3.5 h-3.5" />
+                  <span className="capitalize">{userRole === 'admin' ? 'Admin' : 'Warga'}</span>
+                </button>
+
+                {/* Settings Button */}
+                <button
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="bg-slate-800 hover:bg-slate-700 p-2 rounded-lg text-slate-300 hover:text-white transition border border-slate-700"
+                  title="Pengaturan Paguyuban & Bank"
+                >
+                  <Icon name="settings" className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 flex space-x-1 sm:space-x-4 border-t border-slate-800/80 overflow-x-auto text-xs font-semibold">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`py-2.5 px-3 flex items-center space-x-1.5 border-b-2 whitespace-nowrap transition ${
+                  activeTab === 'dashboard' ? 'border-emerald-500 text-emerald-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon name="building" className="w-4 h-4" />
+                <span>Dashboard</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('warga')}
+                className={`py-2.5 px-3 flex items-center space-x-1.5 border-b-2 whitespace-nowrap transition ${
+                  activeTab === 'warga' ? 'border-emerald-500 text-emerald-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon name="users" className="w-4 h-4" />
+                <span>Data Warga ({warga.length})</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('kas')}
+                className={`py-2.5 px-3 flex items-center space-x-1.5 border-b-2 whitespace-nowrap transition ${
+                  activeTab === 'kas' ? 'border-emerald-500 text-emerald-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon name="wallet" className="w-4 h-4" />
+                <span>Kas & Iuran</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('pengumuman')}
+                className={`py-2.5 px-3 flex items-center space-x-1.5 border-b-2 whitespace-nowrap transition ${
+                  activeTab === 'pengumuman' ? 'border-emerald-500 text-emerald-400 font-bold' : 'border-transparent text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon name="bell" className="w-4 h-4" />
+                <span>Pengumuman ({pengumuman.length})</span>
+              </button>
+            </div>
+          </header>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+            {/* TAB: DASHBOARD */}
+            {activeTab === 'dashboard' && (
+              <div className="space-y-6">
+                {/* Welcome Card */}
+                <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white rounded-2xl p-5 sm:p-6 shadow-md border border-slate-700/60 relative overflow-hidden">
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                      <span className="bg-emerald-500/20 text-emerald-300 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-wide">
+                        Ketua Paguyuban: Bpk. {settings.namaKetuaPaguyuban}
+                      </span>
+                      <h2 className="text-xl sm:text-2xl font-black mt-2">Selamat Datang di RT Digital Perumahan GNM</h2>
+                      <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+                        Sistem manajemen mandiri warga, iuran digital QRIS, rekapitulasi kas paguyuban, serta pusat komunikasi cepat dengan {settings.namaPosSatpam}.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                      <button
+                        onClick={() => handleOpenPay()}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-900/40 flex items-center space-x-2 transition"
+                      >
+                        <Icon name="qr" className="w-4 h-4" />
+                        <span>Bayar Iuran QRIS</span>
+                      </button>
+                      <button
+                        onClick={() => setIsSosOpen(true)}
+                        className="bg-red-600/90 hover:bg-red-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg shadow-red-900/40 flex items-center space-x-2 transition"
+                      >
+                        <Icon name="phone" className="w-4 h-4" />
+                        <span>Hubungi {settings.namaPosSatpam}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                    <p className="text-xs text-slate-500 font-medium">Saldo Kas Bersih</p>
+                    <h3 className="text-lg sm:text-xl font-black text-emerald-700 mt-1">
+                      Rp {saldoKas.toLocaleString('id-ID')}
+                    </h3>
+                    <p className="text-[10px] text-slate-400 mt-1">Total Saldo Aktif Paguyuban</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                    <p className="text-xs text-slate-500 font-medium">Iuran Bulanan Standar</p>
+                    <h3 className="text-lg sm:text-xl font-black text-slate-800 mt-1">
+                      Rp {settings.nominalIuranPerBulan.toLocaleString('id-ID')}
+                    </h3>
+                    <p className="text-[10px] text-emerald-600 font-medium mt-1">Per KK / Bulan</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                    <p className="text-xs text-slate-500 font-medium">Status Iuran Warga</p>
+                    <h3 className="text-lg sm:text-xl font-black text-slate-800 mt-1">
+                      {totalWargaLunas} / {warga.length} <span className="text-xs font-semibold text-emerald-600">Lunas</span>
+                    </h3>
+                    <p className="text-[10px] text-amber-600 font-medium mt-1">{warga.length - totalWargaLunas} Belum Bayar</p>
+                  </div>
+                  <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                    <p className="text-xs text-slate-500 font-medium">{settings.namaPosSatpam}</p>
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-800 mt-1 truncate">
+                      {settings.kontakPosSatpam}
+                    </h3>
+                    <p className="text-[10px] text-emerald-600 font-medium mt-1">Siaga 24 Jam Darurat SOS</p>
+                  </div>
+                </div>
+
+                {/* Announcements Preview */}
+                <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-extrabold text-slate-800 text-sm sm:text-base flex items-center space-x-2">
+                      <Icon name="bell" className="w-5 h-5 text-emerald-600" />
+                      <span>Pengumuman & Agenda Terbaru</span>
+                    </h3>
+                    <button onClick={() => setActiveTab('pengumuman')} className="text-xs font-bold text-emerald-600 hover:underline">
+                      Lihat Semua
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {pengumuman.slice(0, 2).map(p => (
+                      <div key={p.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+                        <div className="flex justify-between items-start">
+                          <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
+                            {p.kategori}
+                          </span>
+                          <span className="text-slate-400 text-[10px] font-mono">{p.tanggal}</span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 mt-2 text-sm">{p.judul}</h4>
+                        <p className="text-slate-600 mt-1 line-clamp-2">{p.isi}</p>
+                        <p className="text-[10px] text-slate-400 mt-2">Lokasi: {p.lokasi}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: DATA WARGA */}
+            {activeTab === 'warga' && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-800">Database Warga Perumahan GNM</h2>
+                    <p className="text-xs text-slate-500">Total {warga.length} Kepala Keluarga terdaftar</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {userRole === 'admin' && (
+                      <button
+                        onClick={() => setIsAddWargaOpen(true)}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 shadow-sm transition"
+                      >
+                        <Icon name="plus" className="w-4 h-4" />
+                        <span>Tambah Warga</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="py-3 px-4">Nama Warga</th>
+                          <th className="py-3 px-3">Blok / No</th>
+                          <th className="py-3 px-3">No. WhatsApp</th>
+                          <th className="py-3 px-3">Status Iuran</th>
+                          <th className="py-3 px-4 text-right">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {warga.map((w) => (
+                          <tr key={w.id} className="hover:bg-slate-50/80 transition">
+                            <td className="py-3 px-4 font-bold text-slate-900">{w.nama}</td>
+                            <td className="py-3 px-3 font-mono text-emerald-800 font-semibold">{w.blok} / {w.noRumah}</td>
+                            <td className="py-3 px-3 text-slate-600 font-mono">{w.hp}</td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                w.iuranLunas ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {w.iuranLunas ? 'Lunas' : 'Belum Lunas'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-right space-x-2">
+                              <button
+                                onClick={() => handleOpenPay(w)}
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-2.5 py-1 rounded border border-emerald-200 text-[11px]"
+                              >
+                                Bayar
+                              </button>
+                              {userRole === 'admin' && (
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Hapus data ${w.nama}?`)) {
+                                      setWarga(prev => prev.filter(x => x.id !== w.id));
+                                    }
+                                  }}
+                                  className="text-red-500 hover:text-red-700 font-semibold text-[11px]"
+                                >
+                                  Hapus
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: KAS & IURAN */}
+            {activeTab === 'kas' && (
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-800">Buku Kas & Catatan Iuran Paguyuban</h2>
+                    <p className="text-xs text-slate-500">Iuran Standar: Rp {settings.nominalIuranPerBulan.toLocaleString('id-ID')} / bulan</p>
+                  </div>
+                  {userRole === 'admin' && (
+                    <button
+                      onClick={() => setIsAddKasOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 shadow-sm transition"
+                    >
+                      <Icon name="plus" className="w-4 h-4" />
+                      <span>Catat Transaksi Kas</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                        <tr>
+                          <th className="py-3 px-4">Tanggal</th>
+                          <th className="py-3 px-3">Jenis</th>
+                          <th className="py-3 px-3">Kategori</th>
+                          <th className="py-3 px-4">Keterangan</th>
+                          <th className="py-3 px-4 text-right">Nominal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {kas.map((k) => (
+                          <tr key={k.id} className="hover:bg-slate-50/80 transition">
+                            <td className="py-3 px-4 font-mono text-slate-500">{k.tanggal}</td>
+                            <td className="py-3 px-3">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                k.jenis === 'Masuk' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {k.jenis}
+                              </span>
+                            </td>
+                            <td className="py-3 px-3 font-semibold text-slate-700">{k.kategori}</td>
+                            <td className="py-3 px-4 text-slate-800">{k.desc}</td>
+                            <td className={`py-3 px-4 text-right font-mono font-bold ${
+                              k.jenis === 'Masuk' ? 'text-emerald-700' : 'text-red-600'
+                            }`}>
+                              {k.jenis === 'Masuk' ? '+' : '-'} Rp {k.nominal.toLocaleString('id-ID')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: PENGUMUMAN */}
+            {activeTab === 'pengumuman' && (
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex justify-between items-center">
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-800">Papan Pengumuman Warga</h2>
+                    <p className="text-xs text-slate-500">Informasi lingkungan & kegiatan Perumahan GNM</p>
+                  </div>
+                  {userRole === 'admin' && (
+                    <button
+                      onClick={() => setIsAddPengumumanOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-lg flex items-center space-x-1.5 shadow-sm transition"
+                    >
+                      <Icon name="plus" className="w-4 h-4" />
+                      <span>Buat Pengumuman</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {pengumuman.map((p) => (
+                    <div key={p.id} className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs space-y-2">
+                      <div className="flex justify-between items-start">
+                        <span className="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">
+                          {p.kategori}
+                        </span>
+                        <span className="text-slate-400 font-mono text-[10px]">{p.tanggal}</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-base">{p.judul}</h3>
+                      <p className="text-xs text-slate-600 leading-relaxed">{p.isi}</p>
+                      <div className="pt-2 border-t border-slate-100 flex justify-between text-[11px] text-slate-500">
+                        <span>Lokasi: <strong>{p.lokasi}</strong></span>
+                        <span>PJ: <strong>{p.pj}</strong></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </main>
+
+          {/* FOOTER */}
+          <footer className="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+            <p><strong>PERUMAHAN GRAHA NUANSA MUNDU (GNM)</strong> • Cirebon, Jawa Barat</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Ketua: Bpk. {settings.namaKetuaPaguyuban} • Siaga: {settings.namaPosSatpam} ({settings.kontakPosSatpam})</p>
+          </footer>
+
+          {/* MODAL: SOS DARURAT POS SATPAM */}
+          {isSosOpen && (
+            <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 border-2 border-red-500 shadow-2xl animate-in fade-in">
+                <div className="flex justify-between items-center border-b pb-3">
+                  <div className="flex items-center space-x-2 text-red-600">
+                    <Icon name="sos" className="w-6 h-6 animate-pulse" />
+                    <h3 className="font-black text-lg">PANGGILAN DARURAT SOS</h3>
+                  </div>
+                  <button onClick={() => setIsSosOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs text-red-900 space-y-1">
+                  <p className="font-bold">Hubungi Segera {settings.namaPosSatpam}:</p>
+                  <p className="font-mono text-base font-black text-red-700">{settings.kontakPosSatpam}</p>
+                  <p className="text-[11px] text-red-700">Untuk insiden keamanan, kebakaran, medis darurat, atau hewan liar.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <a
+                    href={`tel:${settings.kontakPosSatpam}`}
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center space-x-1.5 shadow-md shadow-red-900/30 transition text-center"
+                  >
+                    <Icon name="phone" className="w-4 h-4" />
+                    <span>Telepon Satpam</span>
+                  </a>
+                  <a
+                    href={`https://wa.me/${settings.kontakPosSatpam.replace(/\D/g, '')}?text=${encodeURIComponent('🚨 DARURAT SOS WARGA PERUMAHAN GRAHA NUANSA MUNDU! Mohon bantuan segera petugas Pos Satpam!')}`}
+                    target="_blank"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl flex items-center justify-center space-x-1.5 shadow-md shadow-emerald-900/30 transition text-center"
+                  >
+                    <span>WhatsApp Satpam</span>
+                  </a>
+                </div>
+                <button
+                  onClick={() => setIsSosOpen(false)}
+                  className="w-full py-2 text-xs text-slate-500 hover:text-slate-700 font-semibold"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: PENGATURAN KETUA & POS SATPAM & NOMINAL */}
+          {isSettingsOpen && (
+            <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+              <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl my-6">
+                <div className="flex justify-between items-center border-b pb-3">
+                  <div className="flex items-center space-x-2 text-slate-800">
+                    <Icon name="settings" className="w-5 h-5 text-emerald-600" />
+                    <h3 className="font-extrabold text-base">Pengaturan Paguyuban & Sistem</h3>
+                  </div>
+                  <button onClick={() => setIsSettingsOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <Icon name="x" className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4 text-xs">
+                  {/* Ketua Section */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                    <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] text-emerald-800">
+                      Identitas Ketua Paguyuban / Pengurus
+                    </h4>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">Nama Ketua Paguyuban</label>
+                      <input
+                        type="text"
+                        value={settings.namaKetuaPaguyuban}
+                        onChange={(e) => setSettings({ ...settings, namaKetuaPaguyuban: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded-lg font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">No. WhatsApp Ketua</label>
+                      <input
+                        type="text"
+                        value={settings.kontakKetua}
+                        onChange={(e) => setSettings({ ...settings, kontakKetua: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded-lg font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pos Satpam Section */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                    <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] text-emerald-800">
+                      Kontak Keamanan & Pos Satpam (SOS)
+                    </h4>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">Nama Pos / Bagian</label>
+                      <input
+                        type="text"
+                        value={settings.namaPosSatpam}
+                        onChange={(e) => setSettings({ ...settings, namaPosSatpam: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded-lg font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">No. HP / WhatsApp Pos Satpam</label>
+                      <input
+                        type="text"
+                        value={settings.kontakPosSatpam}
+                        onChange={(e) => setSettings({ ...settings, kontakPosSatpam: e.target.value })}
+                        className="w-full p-2 border border-slate-300 rounded-lg font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Nominal Iuran Section */}
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2.5">
+                    <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] text-emerald-800">
+                      Tarif Iuran Bulanan Standar
+                    </h4>
+                    <div>
+                      <label className="block text-slate-600 font-semibold mb-1">Nominal Iuran Bulanan (Rp)</label>
+                      <input
+                        type="number"
+                        step="5000"
+                        value={settings.nominalIuranPerBulan}
+                        onChange={(e) => setSettings({ ...settings, nominalIuranPerBulan: Number(e.target.value) || 0 })}
+                        className="w-full p-2 border border-slate-300 rounded-lg font-mono font-bold text-emerald-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end space-x-2">
+                  <button
+                    onClick={() => setIsSettingsOpen(false)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition"
+                  >
+                    Simpan Perubahan
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL: BAYAR IURAN QRIS & EDIT NOMINAL */}
+          {isQrOpen && (
+            <QrModalContent
+              wargaList={warga}
+              selectedWarga={selectedWargaForPay}
+              baseNominal={settings.nominalIuranPerBulan}
+              settings={settings}
+              onClose={() => setIsQrOpen(false)}
+              onConfirmPayment={handleConfirmPayment}
+            />
+          )}
+
+          {/* MODAL: KUITANSI DIGITAL */}
+          {kuitansiModalData && (
+            <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+                <div id="printable-area" className="border-2 border-emerald-600/40 rounded-xl p-5 bg-emerald-50/20 text-slate-800 space-y-3">
+                  <div className="border-b border-emerald-200 pb-2 text-center">
+                    <h4 className="font-extrabold text-sm text-emerald-900">KUITANSI IURAN DIGITAL</h4>
+                    <p className="text-[10px] text-slate-500">Perumahan Graha Nuansa Mundu, Cirebon</p>
+                    <p className="font-mono text-[10px] text-emerald-700 font-bold mt-1">No: {kuitansiModalData.no}</p>
+                  </div>
+                  <div className="text-xs space-y-1.5">
+                    <div className="flex justify-between"><span className="text-slate-500">Nama Warga:</span><span className="font-bold">{kuitansiModalData.warga.nama}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Blok / Rumah:</span><span className="font-mono font-bold">{kuitansiModalData.warga.blok} / {kuitansiModalData.warga.noRumah}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Periode:</span><span>{kuitansiModalData.periode} ({kuitansiModalData.durasi} Bulan)</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Total Dibayar:</span><span className="font-mono font-black text-emerald-700 text-sm">Rp {kuitansiModalData.nominal.toLocaleString('id-ID')}</span></div>
+                    <div className="flex justify-between"><span className="text-slate-500">Tanggal:</span><span>{kuitansiModalData.tanggal}</span></div>
+                  </div>
+                  <div className="border-t border-emerald-200 pt-2 text-right text-[10px] text-slate-600">
+                    <p>Mengetahui,</p>
+                    <p className="font-bold text-slate-800 mt-4">Bpk. {kuitansiModalData.ketua}</p>
+                    <p className="text-emerald-700 font-medium">Ketua Paguyuban Perumahan GNM</p>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button onClick={() => window.print()} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-1.5">
+                    <Icon name="printer" className="w-4 h-4" />
+                    <span>Cetak Kuitansi</span>
+                  </button>
+                  <button onClick={() => setKuitansiModalData(null)} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl">
+                    Selesai
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // --- QR MODAL WITH EDITABLE NOMINAL ---
+    function QrModalContent({ wargaList, selectedWarga, baseNominal, settings, onClose, onConfirmPayment }) {
+      const [currentWarga, setCurrentWarga] = useState(selectedWarga || wargaList[0]);
+      const [durasiBulan, setDurasiBulan] = useState(1);
+      const [customNominal, setCustomNominal] = useState(baseNominal);
+      const [qrDataUrl, setQrDataUrl] = useState('');
+      const [donasi, setDonasi] = useState(0);
+
+      const totalBayar = (customNominal * durasiBulan) + donasi;
+
+      // Generate dynamic QR code
+      useEffect(() => {
+        if (window.QRCode) {
+          const payload = `00020101021226${settings.qrId}52045814530336054${totalBayar}5802ID59${settings.merchantName.length}${settings.merchantName}6007CIREBON6304`;
+          window.QRCode.toDataURL(payload, { width: 220, margin: 1 }, (err, url) => {
+            if (!err) setQrDataUrl(url);
+          });
+        }
+      }, [totalBayar, settings]);
+
+      return (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl my-6">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-extrabold text-slate-900 text-base flex items-center space-x-2">
+                <Icon name="qr" className="w-5 h-5 text-emerald-600" />
+                <span>Bayar Iuran Digital QRIS</span>
+              </h3>
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                <Icon name="x" className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Select Warga */}
+            <div className="text-xs space-y-1">
+              <label className="block text-slate-600 font-semibold">Pilih Warga / Kepala Keluarga:</label>
+              <select
+                value={currentWarga?.id}
+                onChange={(e) => setCurrentWarga(wargaList.find(w => w.id === Number(e.target.value)))}
+                className="w-full p-2 border border-slate-300 rounded-lg font-bold text-slate-800"
+              >
+                {wargaList.map(w => (
+                  <option key={w.id} value={w.id}>
+                    {w.nama} (Blok {w.blok}/{w.noRumah})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Periode & Editable Nominal */}
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-3">
+              <div>
+                <label className="block text-slate-600 font-bold mb-1.5">Pilihan Periode Iuran:</label>
+                <div className="grid grid-cols-4 gap-1.5 font-bold">
+                  {[1, 3, 6, 12].map(bln => (
+                    <button
+                      key={bln}
+                      type="button"
+                      onClick={() => setDurasiBulan(bln)}
+                      className={`py-1.5 rounded-lg border text-center transition ${
+                        durasiBulan === bln
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {bln} Bln
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Edit Nominal Input */}
+              <div>
+                <label className="block text-slate-600 font-bold mb-1">Nominal Iuran per Bulan (Bisa Diedit):</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-2 font-bold text-slate-400">Rp</span>
+                  <input
+                    type="number"
+                    step="5000"
+                    value={customNominal}
+                    onChange={(e) => setCustomNominal(Number(e.target.value) || 0)}
+                    className="w-full pl-9 pr-3 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-800 text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                {/* Nominal quick presets */}
+                <div className="flex gap-1.5 mt-1.5">
+                  {[35000, 50000, 75000, 100000].map(val => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setCustomNominal(val)}
+                      className="text-[10px] bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-600 hover:border-emerald-500"
+                    >
+                      {val / 1000}k
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Total Display & QR */}
+            <div className="text-center space-y-2">
+              <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl">
+                <span className="text-[11px] text-emerald-800 font-semibold">Total Tagihan ({durasiBulan} Bulan):</span>
+                <div className="text-xl font-black text-emerald-700 font-mono">
+                  Rp {totalBayar.toLocaleString('id-ID')}
+                </div>
+              </div>
+
+              {qrDataUrl ? (
+                <div className="flex justify-center p-2 bg-white rounded-xl border border-slate-200 shadow-inner">
+                  <img src={qrDataUrl} alt="QRIS Iuran Perumahan GNM" className="w-44 h-44 rounded-lg" />
+                </div>
+              ) : (
+                <div className="w-44 h-44 bg-slate-100 rounded-xl mx-auto flex items-center justify-center text-xs text-slate-400">
+                  Membuat QR...
+                </div>
+              )}
+              <p className="text-[10px] text-slate-500">Scan QRIS dengan GoPay, OVO, Dana, BCA, Mandiri, atau Livin'</p>
+            </div>
+
+            <div className="flex space-x-2 pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => onConfirmPayment({
+                  warga: currentWarga,
+                  durasi: durasiBulan,
+                  total: totalBayar,
+                  periode: `${durasiBulan} Bulan (Mulai Okt 2026)`
+                })}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-900/30 transition"
+              >
+                Konfirmasi Lunas
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Render React
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
